@@ -7,6 +7,7 @@ import android.os.Environment
 import au.com.bytecode.opencsv.CSVWriter
 import java.io.*
 import java.util.*
+import kotlin.collections.HashMap
 
 class ExportDbUtil(context: Context, db: String, directoryName: String, private var exporterListener: ExporterListener) {
     var dbName: String
@@ -72,7 +73,7 @@ class ExportDbUtil(context: Context, db: String, directoryName: String, private 
      * @param csvFileName = filemame that you want to show after export
      *
      */
-    public fun exportAllTables(csvFileName: String) {
+    fun exportAllTables(csvFileName: String) {
         val file = File(exportDir, csvFileName)
         try {
 
@@ -107,6 +108,45 @@ class ExportDbUtil(context: Context, db: String, directoryName: String, private 
         }
 
         curCSV.close()
+    }
+
+    fun exportSelectedTables(tableName: String, csvFileName: String, extra: String, condition: String): Int {
+        var count = 0
+        val file = File(exportDir, csvFileName)
+        try {
+            file.createNewFile()
+            val csvWrite = CSVWriter(FileWriter(file))
+            count = exportCustomizeTable(tableName, csvWrite, extra, condition)
+            exporterListener.success("$tableName successfully Exported")
+        }
+        catch (sqlEx: Exception) {
+            exporterListener.fail("Export $tableName fail", sqlEx.message.toString())
+        }
+
+        return count
+    }
+
+    private fun exportCustomizeTable(tableName: String, csvWrite: CSVWriter, extra: String, condition: String) : Int {
+        val curCSV = database.rawQuery("SELECT $tableName.* FROM $tableName $condition", null)
+        val arrStr = StringBuilder()
+        val count = curCSV.count
+
+        while (curCSV.moveToNext()) {
+            arrStr.setLength(0)
+            if(extra.isNotBlank()) {
+                arrStr.append("$extra|")
+            }
+
+            for (i in 0 until curCSV.columnCount) {
+                arrStr.append(curCSV.getString(i) ?: "")
+                if(!curCSV.isLast) {
+                    arrStr.append("|")
+                }
+            }
+            csvWrite.writeNext(Array(1) {arrStr.toString()})
+        }
+        curCSV.close()
+        return count
     }
 
     /**
