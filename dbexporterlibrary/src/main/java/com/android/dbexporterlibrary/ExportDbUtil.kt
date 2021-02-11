@@ -118,6 +118,7 @@ class ExportDbUtil(context: Context, db: String, directoryName: String, private 
             file.createNewFile()
             val csvWrite = CSVWriter(FileWriter(file))
             count = exportCustomizeTable(tableName, csvWrite, extra, condition)
+            csvWrite.close()
             exporterListener.success("$tableName successfully Exported")
         }
         catch (sqlEx: Exception) {
