@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Environment
 import au.com.bytecode.opencsv.CSVWriter
 import java.io.*
+import java.lang.StringBuilder
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -128,22 +129,24 @@ class ExportDbUtil(context: Context, db: String, directoryName: String, private 
 
     private fun exportCustomizeTable(tableName: String, csvWrite: CSVWriter, extra: String, condition: String) : Int {
         val curCSV = database.rawQuery("SELECT $tableName.* FROM $tableName $condition", null)
-        val arrStr = StringBuilder()
+        val sb = StringBuilder()
         val count = curCSV.count
+        val arrStr = Array(1) { "it = $it" }
 
         while (curCSV.moveToNext()) {
-            arrStr.setLength(0)
             if(extra.isNotBlank()) {
-                arrStr.append("$extra|")
+                sb.append("$extra|")
             }
 
             for (i in 0 until curCSV.columnCount) {
-                arrStr.append(curCSV.getString(i) ?: "")
-                if(!curCSV.isLast) {
-                    arrStr.append("|")
+                sb.append(curCSV.getString(i) ?: "")
+                if(i != curCSV.columnCount-1) {
+                    sb.append("|")
                 }
             }
-            csvWrite.writeNext(Array(1) {arrStr.toString()})
+            arrStr[0] = sb.toString()
+            csvWrite.writeNext(arrStr)
+            sb.setLength(0)
         }
         curCSV.close()
         return count
