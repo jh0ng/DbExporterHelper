@@ -139,11 +139,11 @@ class ExportDbUtil(context: Context, db: String, directoryName: String, private 
 
             for (i in 0 until curCSV.columnCount) {
                 arrStr.append(curCSV.getString(i) ?: "")
-                if(!curCSV.isLast) {
+                if(i != curCSV.columnCount-1) {
                     arrStr.append("|")
                 }
             }
-            csvWrite.writeNext(Array(1) {arrStr.toString()})
+            csvWrite.writeNext(arrayOf(arrStr.toString()))
         }
         curCSV.close()
         return count
